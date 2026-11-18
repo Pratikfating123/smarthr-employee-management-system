@@ -134,7 +134,6 @@ Recommended screenshots:
 
 When you add the image files, uncomment or add the corresponding Markdown image links below. GitHub will render them on this page.
 
-```markdown
 ## Application Screenshots
 
 ### HR/Admin Dashboard
@@ -157,7 +156,6 @@ When you add the image files, uncomment or add the corresponding Markdown image 
 
 ### Reports
 ![Reports](./screenshots/reports.png)
-```
 
 **Screenshot tip:** Use `Win + Shift + S` on Windows to capture the running application. Avoid including real employee personal information, email addresses, phone numbers, salary data, passwords, or other confidential information. Use fictional demo records where possible.
 
