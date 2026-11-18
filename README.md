@@ -138,25 +138,25 @@ When you add the image files, uncomment or add the corresponding Markdown image 
 ## Application Screenshots
 
 ### HR/Admin Dashboard
-![SmartHR Dashboard](screenshots/dashboard.png)
+![SmartHR Dashboard](./screenshots/dashboard.png)
 
 ### Employee Directory
-![Employee Directory](screenshots/employees.png)
+![Employee Directory](./screenshots/employees.png)
 
 ### Employee Details
-![Employee Details](screenshots/employee-details.png)
+![Employee Details](./screenshots/employee-details.png)
 
 ### Attendance
-![Attendance](screenshots/attendance.png)
+![Attendance](./screenshots/attendance.png)
 
 ### Leave Management
-![Leave Management](screenshots/leaves.png)
+![Leave Management](./screenshots/leaves.png)
 
 ### Payroll
-![Payroll](screenshots/payroll.png)
+![Payroll](./screenshots/payroll.png)
 
 ### Reports
-![Reports](screenshots/reports.png)
+![Reports](./screenshots/reports.png)
 ```
 
 **Screenshot tip:** Use `Win + Shift + S` on Windows to capture the running application. Avoid including real employee personal information, email addresses, phone numbers, salary data, passwords, or other confidential information. Use fictional demo records where possible.
