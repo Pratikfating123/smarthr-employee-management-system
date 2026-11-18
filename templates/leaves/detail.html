@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Leave request{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>{{ leave.leave_type }} request</h1><p>{{ leave.employee.full_name }} · {{ leave.employee.employee_id }}</p></div>
+  <a class="btn btn-light" href="{% url 'leaves:list' %}">&larr; All requests</a></div>
+<div class="row g-3">
+  <div class="col-lg-7"><div class="panel">
+    <div class="panel-title"><h2>Details</h2>{% include "partials/status_pill.html" with value=leave.status label=leave.get_status_display %}</div>
+    <dl class="kv">
+      <dt>Dates</dt><dd>{{ leave.start_date|date:"D, d M Y" }} – {{ leave.end_date|date:"D, d M Y" }}</dd>
+      <dt>Working days</dt><dd>{{ leave.days }}</dd>
+      <dt>Reason</dt><dd>{{ leave.reason|linebreaksbr }}</dd>
+      <dt>Submitted</dt><dd>{{ leave.submitted_at|date:"d M Y, H:i" }}</dd>
+      <dt>Reviewed by</dt><dd>{{ leave.reviewer.display_name|default:"—" }}{% if leave.reviewed_at %} on {{ leave.reviewed_at|date:"d M Y, H:i" }}{% endif %}</dd>
+      <dt>Review comments</dt><dd>{{ leave.review_comments|default:"—"|linebreaksbr }}</dd>
+    </dl>
+  </div></div>
+  <div class="col-lg-5">
+    {% if can_review %}
+    <div class="panel mb-3">
+      <div class="panel-title"><h2>Review request</h2></div>
+      <form method="post" id="reviewForm">{% csrf_token %}
+        <label class="form-label" for="comments">Comments (optional)</label>
+        <textarea class="form-control" id="comments" name="comments" rows="3" maxlength="1000"></textarea>
+        <div class="d-flex gap-2 mt-3">
+          <button class="btn btn-soft-success" type="submit" formaction="{% url 'leaves:approve' leave.pk %}">Approve</button>
+          <button class="btn btn-soft-danger" type="submit" formaction="{% url 'leaves:reject' leave.pk %}">Reject</button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+    {% if can_cancel %}
+    <div class="panel">
+      <div class="panel-title"><h3>Cancel request</h3></div>
+      <p class="text-muted small">{% if leave.status == 'approved' %}Cancelling approved leave restores the deducted balance.{% else %}Withdraw this pending request.{% endif %}</p>
+      <form method="post" action="{% url 'leaves:cancel' leave.pk %}" data-confirm="Cancel this leave request?">{% csrf_token %}<button class="btn btn-light" type="submit">Cancel request</button></form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

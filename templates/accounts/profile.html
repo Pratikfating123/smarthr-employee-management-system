@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}My profile{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>My profile</h1><p>Your account and employment details.</p></div>
+  <a class="btn btn-light" href="{% url 'accounts:password_change' %}"><i class="bi bi-key" aria-hidden="true"></i> Change password</a></div>
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="panel text-center">
+      {% if employee and employee.photo %}<img src="{{ employee.photo.url }}" alt="" class="rounded-circle mb-2" width="96" height="96" style="object-fit:cover">
+      {% else %}<span class="sh-avatar sh-avatar-lg mb-2" aria-hidden="true">{{ user.initials }}</span>{% endif %}
+      <h2>{{ user.display_name }}</h2>
+      <p class="text-muted mb-1">{{ user.get_role_display }}</p>
+      <p class="text-muted small mb-0">{{ user.email }}</p>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="panel">
+      <div class="panel-title"><h2>Details</h2>{% if employee %}<a class="btn btn-sm btn-light" href="{% url 'employees:detail' employee.pk %}">Full employee record</a>{% endif %}</div>
+      <dl class="kv">
+        <dt>Username</dt><dd>{{ user.username }}</dd>
+        <dt>Role</dt><dd>{{ user.get_role_display }}</dd>
+        {% if employee %}
+        <dt>Employee ID</dt><dd>{{ employee.employee_id }}</dd>
+        <dt>Department</dt><dd>{{ employee.department|default:"—" }}</dd>
+        <dt>Designation</dt><dd>{{ employee.designation|default:"—" }}</dd>
+        <dt>Joining date</dt><dd>{{ employee.joining_date|date:"d M Y" }}</dd>
+        <dt>Phone</dt><dd>{{ employee.phone|default:"—" }}</dd>
+        {% else %}
+        <dt>Employee record</dt><dd class="text-muted">No employee profile is linked to this account.</dd>
+        {% endif %}
+      </dl>
+    </div>
+  </div>
+</div>
+{% endblock %}

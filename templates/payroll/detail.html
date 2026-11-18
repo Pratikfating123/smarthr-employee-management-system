@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Payslip {{ payroll.period_label }}{% endblock %}
+{% block content %}
+<div class="page-head no-print"><div><h1>Payslip</h1><p>{{ payroll.period_label }} · {{ payroll.employee.full_name }}</p></div>
+  <div class="d-flex gap-2"><a class="btn btn-light" href="{% url 'payroll:list' %}">&larr; Back</a>
+  <button class="btn btn-dark" type="button" onclick="window.print()"><i class="bi bi-printer" aria-hidden="true"></i> Print / save as PDF</button></div></div>
+
+<div class="payslip panel">
+  <div class="d-flex justify-content-between flex-wrap gap-2 mb-3">
+    <div><div class="sh-brand text-dark"><span class="sh-logo">S</span> SmartHR</div><div class="text-muted small">Payslip for {{ payroll.period_label }}</div></div>
+    <div class="text-md-end"><div class="fw-semibold">{{ payroll.employee.full_name }}</div>
+      <div class="text-muted small">{{ payroll.employee.employee_id }} · {{ payroll.employee.designation|default:"—" }} · {{ payroll.employee.department|default:"—" }}</div></div>
+  </div>
+  <div class="row g-4">
+    <div class="col-md-6"><table class="sh-table"><thead><tr><th>Earnings</th><th>Amount</th></tr></thead><tbody>
+      <tr><td>Basic salary</td><td class="amount">{{ payroll.basic_salary }}</td></tr>
+      <tr><td>Allowances</td><td class="amount">{{ payroll.allowances }}</td></tr>
+      <tr><td>Other earnings</td><td class="amount">{{ payroll.other_earnings }}</td></tr>
+      <tr><td class="fw-semibold">Gross salary</td><td class="amount fw-semibold">{{ payroll.gross_salary }}</td></tr></tbody></table></div>
+    <div class="col-md-6"><table class="sh-table"><thead><tr><th>Deductions</th><th>Amount</th></tr></thead><tbody>
+      <tr><td>Provident fund (sample)</td><td class="amount">{{ payroll.pf_amount }}</td></tr>
+      <tr><td>Tax (sample flat rate)</td><td class="amount">{{ payroll.tax_amount }}</td></tr>
+      <tr><td>Other deductions</td><td class="amount">{{ payroll.other_deductions }}</td></tr>
+      <tr><td class="fw-semibold">Total deductions</td><td class="amount fw-semibold">{{ payroll.total_deductions }}</td></tr></tbody></table></div>
+  </div>
+  <div class="d-flex justify-content-between align-items-center mt-4 p-3 rounded-4" style="background:rgba(184,197,255,0.3)">
+    <span class="fw-semibold">Net salary</span><span class="fs-4 fw-bold amount">{{ payroll.net_salary }}</span>
+  </div>
+  <p class="text-muted small mt-3 mb-0">Approval: {{ payroll.get_status_display }}{% if payroll.approved_by %} by {{ payroll.approved_by.display_name }}{% endif %} · Payment: {{ payroll.get_payment_status_display }}{% if payroll.paid_date %} on {{ payroll.paid_date|date:"d M Y" }}{% endif %}.
+    Calculated with a sample formula; not a statutory tax computation.</p>
+</div>
+
+{% if manager %}
+<div class="panel mt-3 no-print payslip">
+  <div class="panel-title"><h2>Payroll actions</h2></div>
+  <div class="d-flex flex-wrap gap-3 align-items-end">
+    {% if payroll.status == 'generated' %}
+    <form method="post" action="{% url 'payroll:approve' payroll.pk %}" data-confirm="Approve this payroll? The employee will be notified and can view the payslip.">{% csrf_token %}<button class="btn btn-soft-success" type="submit">Approve payroll</button></form>
+    {% else %}
+    <form method="post" action="{% url 'payroll:payment' payroll.pk %}" class="d-flex gap-2 align-items-end" data-confirm="Update the payment status?">{% csrf_token %}
+      <div><label class="form-label" for="payment_status">Payment status</label><select class="form-select" id="payment_status" name="payment_status">
+        {% for v, l in payment_statuses %}<option value="{{ v }}" {% if payroll.payment_status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+      <button class="btn btn-primary" type="submit">Update</button></form>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

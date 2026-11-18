@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Audit log</h1><p>Important administrative actions, newest first.</p></div></div>
+<div class="panel">
+  <form method="get" class="filter-bar">
+    <div><label class="form-label" for="action">Action contains</label><input class="form-control" id="action" name="action" value="{{ action }}" placeholder="e.g. leave_approved"></div>
+    <div class="btn-wrap"><button class="btn btn-primary" type="submit">Filter</button><a class="btn btn-light" href="{% url 'core:audit_log' %}">Reset</a></div>
+  </form>
+  <div class="table-responsive">
+    <table class="sh-table">
+      <thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Record</th><th>Details</th></tr></thead>
+      <tbody>
+      {% for e in page_obj %}
+        <tr><td>{{ e.created_at|date:"d M Y H:i" }}</td><td>{{ e.actor|default:"system" }}</td><td><span class="pill pill-neutral">{{ e.action }}</span></td>
+          <td>{{ e.target_type }} {% if e.target_id %}#{{ e.target_id }}{% endif %}</td><td>{{ e.summary }}</td></tr>
+      {% empty %}
+        <tr><td colspan="5"><div class="empty-state">No audit entries yet.</div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

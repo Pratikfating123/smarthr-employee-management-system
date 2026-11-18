@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Leave requests{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Leave requests</h1><p>{% if user.is_hr_or_admin %}Review and track leave across the organisation.{% else %}Your leave history.{% endif %}</p></div>
+  <div class="d-flex gap-2"><a class="btn btn-light" href="{% url 'leaves:balances' %}">Balances</a>
+  {% if user.employee_profile %}<a class="btn btn-primary" href="{% url 'leaves:apply' %}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Apply for leave</a>{% endif %}</div></div>
+<div class="panel">
+  <form method="get" class="filter-bar">
+    {% if user.is_hr_or_admin %}<div style="flex:2 1 200px"><label class="form-label" for="q">Employee</label><input class="form-control" id="q" name="q" value="{{ filters.q }}" placeholder="ID or name"></div>{% endif %}
+    <div><label class="form-label" for="status">Status</label><select class="form-select" id="status" name="status"><option value="">All</option>{% for v, l in statuses %}<option value="{{ v }}" {% if filters.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div><label class="form-label" for="leave_type">Leave type</label><select class="form-select" id="leave_type" name="leave_type"><option value="">All</option>{% for t in leave_types %}<option value="{{ t.pk }}" {% if filters.leave_type == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select></div>
+    <div class="btn-wrap"><button class="btn btn-primary" type="submit">Filter</button><a class="btn btn-light" href="{% url 'leaves:list' %}">Reset</a></div>
+  </form>
+  <div class="table-responsive"><table class="sh-table">
+    <thead><tr>{% if user.is_hr_or_admin %}<th>Employee</th>{% endif %}<th>Type</th><th>From</th><th>To</th><th>Days</th><th>Submitted</th><th>Status</th><th class="text-end">Action</th></tr></thead>
+    <tbody>
+    {% for l in page_obj %}
+      <tr>{% if user.is_hr_or_admin %}<td>{{ l.employee.full_name }} <span class="text-muted small">{{ l.employee.employee_id }}</span></td>{% endif %}
+        <td>{{ l.leave_type }}</td><td>{{ l.start_date|date:"d M Y" }}</td><td>{{ l.end_date|date:"d M Y" }}</td><td>{{ l.days }}</td><td>{{ l.submitted_at|date:"d M Y" }}</td>
+        <td>{% include "partials/status_pill.html" with value=l.status label=l.get_status_display %}</td>
+        <td class="text-end"><a class="btn btn-sm btn-light" href="{% url 'leaves:detail' l.pk %}">Open</a></td></tr>
+    {% empty %}<tr><td colspan="8"><div class="empty-state"><i class="bi bi-calendar2-x" aria-hidden="true"></i>No leave requests found.</div></td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

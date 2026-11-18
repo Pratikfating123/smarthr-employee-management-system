@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Reports</h1><p>Filter on screen, then export to CSV or Excel.</p></div></div>
+<div class="row g-3">
+  {% for r in reports %}
+  <div class="col-md-6 col-xl-4"><a href="{% url 'reports:detail' r.slug %}" class="text-decoration-none text-reset">
+    <div class="panel h-100"><h2>{{ r.title }}</h2><p class="text-muted mb-0">{{ r.blurb }}</p></div></a></div>
+  {% endfor %}
+</div>
+{% endblock %}

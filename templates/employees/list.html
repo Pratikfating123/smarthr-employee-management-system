@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Employees{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Employees</h1><p>{{ page_obj.paginator.count }} record{{ page_obj.paginator.count|pluralize }} found.</p></div>
+  <a class="btn btn-primary" href="{% url 'employees:create' %}"><i class="bi bi-person-plus" aria-hidden="true"></i> Add employee</a></div>
+<div class="panel">
+  <form method="get" class="filter-bar">
+    <div style="flex:2 1 220px"><label class="form-label" for="q">Search</label><input class="form-control" id="q" name="q" value="{{ filters.q }}" placeholder="ID, name or work email"></div>
+    <div><label class="form-label" for="department">Department</label><select class="form-select" id="department" name="department"><option value="">All</option>{% for d in departments %}<option value="{{ d.pk }}" {% if filters.department == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>
+    <div><label class="form-label" for="designation">Designation</label><select class="form-select" id="designation" name="designation"><option value="">All</option>{% for d in designations %}<option value="{{ d.pk }}" {% if filters.designation == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>
+    <div><label class="form-label" for="status">Status</label><select class="form-select" id="status" name="status"><option value="">All</option>{% for v, l in statuses %}<option value="{{ v }}" {% if filters.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div class="btn-wrap"><button class="btn btn-primary" type="submit">Filter</button><a class="btn btn-light" href="{% url 'employees:list' %}">Reset</a></div>
+  </form>
+  <div class="table-responsive">
+    <table class="sh-table">
+      <thead><tr><th>Employee</th><th>ID</th><th>Department</th><th>Designation</th><th>Joined</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+      <tbody>
+      {% for e in page_obj %}
+        <tr>
+          <td><div class="cell-person"><span class="sh-avatar" aria-hidden="true">{{ e.user.initials }}</span><div><a href="{% url 'employees:detail' e.pk %}" class="fw-medium">{{ e.full_name }}</a><div class="text-muted small">{{ e.work_email }}</div></div></div></td>
+          <td>{{ e.employee_id }}</td><td>{{ e.department|default:"—" }}</td><td>{{ e.designation|default:"—" }}</td><td>{{ e.joining_date|date:"d M Y" }}</td>
+          <td>{% include "partials/status_pill.html" with value=e.status label=e.get_status_display %}</td>
+          <td class="text-end text-nowrap"><a class="btn btn-sm btn-light" href="{% url 'employees:detail' e.pk %}">View</a> <a class="btn btn-sm btn-light" href="{% url 'employees:edit' e.pk %}">Edit</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7"><div class="empty-state"><i class="bi bi-people" aria-hidden="true"></i>No employees match your filters.</div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

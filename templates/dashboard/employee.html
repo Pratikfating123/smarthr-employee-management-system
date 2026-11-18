@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}My dashboard{% endblock %}
+{% block content %}
+{% if not employee %}
+<div class="panel text-center" style="max-width:560px;margin:2rem auto"><h1>Welcome, {{ user.display_name }}</h1>
+  <p class="text-muted">No employee profile is linked to your account yet. Please contact HR.</p></div>
+{% else %}
+<section class="welcome">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div class="d-flex align-items-center gap-3">
+      {% if employee.photo %}<img src="{{ employee.photo.url }}" alt="" class="rounded-circle" width="64" height="64" style="object-fit:cover">{% else %}<span class="sh-avatar sh-avatar-lg" aria-hidden="true">{{ user.initials }}</span>{% endif %}
+      <div>
+        <h1 class="mb-0">{{ greeting }}, {{ user.first_name|default:user.username }}</h1>
+        <p class="text-muted mb-0">{{ employee.designation|default:"Employee" }}{% if employee.department %} · {{ employee.department }}{% endif %} · {{ employee.employee_id }} · {{ today|date:"l, d F Y" }}</p>
+      </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a class="btn btn-primary" href="{% url 'leaves:apply' %}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Apply for leave</a>
+      <a class="btn btn-light" href="{% url 'accounts:profile' %}">My profile</a>
+    </div>
+  </div>
+</section>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-4">
+    <div class="panel h-100">
+      <div class="panel-title"><h2>Today</h2>{% if record %}{% include "partials/status_pill.html" with value=record.status label=record.get_status_display %}{% endif %}</div>
+      {% if record and record.check_in %}
+        <p class="mb-1">Checked in at <strong>{{ record.check_in|time:"H:i" }}</strong>{% if record.check_out %}, out at <strong>{{ record.check_out|time:"H:i" }}</strong> · worked {{ record.worked_display }}{% endif %}</p>
+      {% else %}<p class="text-muted">You haven't checked in yet today.</p>{% endif %}
+      {% if self_checkin %}
+      <div class="d-flex gap-2 mt-3">
+        <form method="post" action="{% url 'attendance:check_in' %}">{% csrf_token %}<button class="btn btn-primary loading-btn" type="submit" {% if not can_check_in %}disabled{% endif %}><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Check in</button></form>
+        <form method="post" action="{% url 'attendance:check_out' %}">{% csrf_token %}<button class="btn btn-dark loading-btn" type="submit" {% if not can_check_out %}disabled{% endif %}><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Check out</button></form>
+      </div>
+      {% else %}<p class="text-muted small mb-0">Self check-in is not enabled; HR records attendance for you.</p>{% endif %}
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="panel h-100">
+      <div class="panel-title"><h2>This month</h2><a class="btn btn-sm btn-light" href="{% url 'attendance:list' %}">Details</a></div>
+      <ul class="mini-list">{% for label, count in month_summary %}<li><span>{{ label }}</span><strong>{{ count }}</strong></li>{% endfor %}</ul>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="panel h-100">
+      <div class="panel-title"><h2>Leave balances</h2><a class="btn btn-sm btn-light" href="{% url 'leaves:balances' %}">History</a></div>
+      <ul class="mini-list">{% for b in balances %}<li><span>{{ b.leave_type }}</span><span><strong>{{ b.remaining }}</strong> <span class="text-muted">/ {{ b.allocated }} days</span></span></li>
+        {% empty %}<li class="text-muted">No leave types configured.</li>{% endfor %}</ul>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="panel h-100">
+      <div class="panel-title"><h2>Leave requests</h2><a class="btn btn-sm btn-light" href="{% url 'leaves:list' %}">View all</a></div>
+      {% if pending_leaves %}<p class="small text-muted">{{ pending_leaves|length }} pending approval.</p>{% endif %}
+      <div class="table-responsive"><table class="sh-table">
+        <thead><tr><th>Type</th><th>Dates</th><th>Days</th><th>Status</th></tr></thead>
+        <tbody>{% for l in recent_leaves %}<tr><td><a href="{% url 'leaves:detail' l.pk %}">{{ l.leave_type }}</a></td><td>{{ l.start_date|date:"d M" }} – {{ l.end_date|date:"d M Y" }}</td><td>{{ l.days }}</td>
+          <td>{% include "partials/status_pill.html" with value=l.status label=l.get_status_display %}</td></tr>
+        {% empty %}<tr><td colspan="4"><div class="empty-state">No leave requests yet.</div></td></tr>{% endfor %}</tbody></table></div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="panel h-100">
+      <div class="panel-title"><h2>Recent payslips</h2><a class="btn btn-sm btn-light" href="{% url 'payroll:list' %}">All</a></div>
+      <ul class="mini-list">{% for p in payslips %}<li><a href="{% url 'payroll:detail' p.pk %}">{{ p.period_label }}</a><span class="amount">{{ p.net_salary }}</span></li>
+        {% empty %}<li class="text-muted">No payslips available yet.</li>{% endfor %}</ul>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

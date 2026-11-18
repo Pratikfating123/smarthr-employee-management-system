@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Notifications</h1><p>Updates about leave, attendance and payroll.</p></div>
+  {% if unread_count %}<form method="post" action="{% url 'notifications:read_all' %}">{% csrf_token %}<button class="btn btn-light" type="submit">Mark all as read</button></form>{% endif %}</div>
+<div class="panel">
+  {% for n in page_obj %}
+  <div class="d-flex justify-content-between align-items-center gap-3 py-2 {% if not forloop.last %}border-bottom{% endif %}">
+    <div>
+      {% if not n.is_read %}<span class="pill pill-info me-1">New</span>{% endif %}{{ n.message }}
+      <div class="text-muted small">{{ n.created_at|date:"d M Y, H:i" }}</div>
+    </div>
+    <form method="post" action="{% url 'notifications:read' n.pk %}">{% csrf_token %}
+      <button class="btn btn-sm btn-light" type="submit">{% if n.url %}Open{% else %}Mark read{% endif %}</button></form>
+  </div>
+  {% empty %}
+  <div class="empty-state"><i class="bi bi-bell-slash" aria-hidden="true"></i>No notifications yet.</div>
+  {% endfor %}
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

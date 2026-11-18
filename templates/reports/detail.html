@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ spec.title }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>{{ spec.title }}</h1><p>{{ spec.blurb }} {{ total }} row{{ total|pluralize }}.</p></div>
+  <div class="d-flex gap-2"><a class="btn btn-light" href="{% url 'reports:index' %}">&larr; Reports</a>
+    <a class="btn btn-primary" href="?{% if export_query %}{{ export_query }}&amp;{% endif %}export=csv"><i class="bi bi-filetype-csv" aria-hidden="true"></i> CSV</a>
+    <a class="btn btn-dark" href="?{% if export_query %}{{ export_query }}&amp;{% endif %}export=xlsx"><i class="bi bi-file-earmark-excel" aria-hidden="true"></i> Excel</a></div></div>
+<div class="panel">
+  {% if spec.filters %}
+  <form method="get" class="filter-bar">
+    {% for f in spec.filters %}
+      {% if f == 'department' %}<div><label class="form-label" for="f-department">Department</label><select class="form-select" id="f-department" name="department"><option value="">All</option>{% for d in departments %}<option value="{{ d.pk }}" {% if get.department == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>
+      {% elif f == 'status' %}<div><label class="form-label" for="f-status">Status</label><select class="form-select" id="f-status" name="status"><option value="">All</option>{% for v, l in spec.statuses %}<option value="{{ v }}" {% if get.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+      {% elif f == 'date' %}<div><label class="form-label" for="f-date">Date</label><input class="form-control" type="date" id="f-date" name="date" value="{{ get.date }}"></div>
+      {% elif f == 'date_from' %}<div><label class="form-label" for="f-from">From</label><input class="form-control" type="date" id="f-from" name="date_from" value="{{ get.date_from }}"></div>
+      {% elif f == 'date_to' %}<div><label class="form-label" for="f-to">To</label><input class="form-control" type="date" id="f-to" name="date_to" value="{{ get.date_to }}"></div>
+      {% elif f == 'year' %}<div><label class="form-label" for="f-year">Year</label><input class="form-control" type="number" id="f-year" name="year" min="2000" max="2100" value="{{ get.year }}"></div>
+      {% elif f == 'month' %}<div><label class="form-label" for="f-month">Month</label><select class="form-select" id="f-month" name="month"><option value="">Current</option>{% for n, name in months %}<option value="{{ n }}" {% if get.month == n|stringformat:"s" %}selected{% endif %}>{{ name }}</option>{% endfor %}</select></div>
+      {% endif %}
+    {% endfor %}
+    <div class="btn-wrap"><button class="btn btn-primary" type="submit">Apply</button><a class="btn btn-light" href="{% url 'reports:detail' slug %}">Reset</a></div>
+  </form>
+  {% endif %}
+  <div class="table-responsive"><table class="sh-table">
+    <thead><tr>{% for h in headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+    <tbody>
+    {% for row in page_obj %}<tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>
+    {% empty %}<tr><td colspan="{{ headers|length }}"><div class="empty-state"><i class="bi bi-inbox" aria-hidden="true"></i>No data for these filters.</div></td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

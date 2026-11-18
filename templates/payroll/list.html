@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{% if user.is_payroll_manager %}Payroll{% else %}My payslips{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>{% if user.is_payroll_manager %}Payroll{% else %}My payslips{% endif %}</h1><p>{% if user.is_payroll_manager %}Generate, approve and track monthly payroll.{% else %}Approved payslips only.{% endif %}</p></div>
+  {% if user.is_payroll_manager %}<div class="d-flex gap-2"><a class="btn btn-light" href="{% url 'payroll:structures' %}">Salary structures</a>
+  <a class="btn btn-primary" href="{% url 'payroll:create' %}"><i class="bi bi-calculator" aria-hidden="true"></i> Generate payroll</a></div>{% endif %}</div>
+<div class="panel">
+  <form method="get" class="filter-bar">
+    {% if user.is_payroll_manager %}<div style="flex:2 1 200px"><label class="form-label" for="q">Employee</label><input class="form-control" id="q" name="q" value="{{ filters.q }}" placeholder="ID or name"></div>{% endif %}
+    <div><label class="form-label" for="year">Year</label><input class="form-control" type="number" id="year" name="year" value="{{ filters.year }}" min="2000" max="2100"></div>
+    <div><label class="form-label" for="month">Month</label><input class="form-control" type="number" id="month" name="month" value="{{ filters.month }}" min="1" max="12"></div>
+    {% if user.is_payroll_manager %}
+    <div><label class="form-label" for="status">Approval</label><select class="form-select" id="status" name="status"><option value="">All</option>{% for v, l in statuses %}<option value="{{ v }}" {% if filters.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div><label class="form-label" for="payment">Payment</label><select class="form-select" id="payment" name="payment"><option value="">All</option>{% for v, l in payments %}<option value="{{ v }}" {% if filters.payment == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    {% endif %}
+    <div class="btn-wrap"><button class="btn btn-primary" type="submit">Filter</button><a class="btn btn-light" href="{% url 'payroll:list' %}">Reset</a></div>
+  </form>
+  <div class="table-responsive"><table class="sh-table">
+    <thead><tr>{% if user.is_payroll_manager %}<th>Employee</th>{% endif %}<th>Period</th><th class="text-end">Gross</th><th class="text-end">Deductions</th><th class="text-end">Net</th>{% if user.is_payroll_manager %}<th>Approval</th>{% endif %}<th>Payment</th><th class="text-end">Action</th></tr></thead>
+    <tbody>
+    {% for p in page_obj %}
+      <tr>{% if user.is_payroll_manager %}<td>{{ p.employee.full_name }} <span class="text-muted small">{{ p.employee.employee_id }}</span></td>{% endif %}
+        <td>{{ p.period_label }}</td><td class="text-end amount">{{ p.gross_salary }}</td><td class="text-end amount">{{ p.total_deductions }}</td><td class="text-end amount fw-semibold">{{ p.net_salary }}</td>
+        {% if user.is_payroll_manager %}<td>{% include "partials/status_pill.html" with value=p.status label=p.get_status_display %}</td>{% endif %}
+        <td>{% include "partials/status_pill.html" with value=p.payment_status label=p.get_payment_status_display %}</td>
+        <td class="text-end"><a class="btn btn-sm btn-light" href="{% url 'payroll:detail' p.pk %}">{% if user.is_payroll_manager %}Review{% else %}Payslip{% endif %}</a></td></tr>
+    {% empty %}<tr><td colspan="8"><div class="empty-state"><i class="bi bi-wallet2" aria-hidden="true"></i>No payroll records found.</div></td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

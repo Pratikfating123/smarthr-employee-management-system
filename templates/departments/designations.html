@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Designations{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Designations</h1><p>Job titles available when creating employees.</p></div>
+  <a class="btn btn-light" href="{% url 'departments:list' %}">&larr; Departments</a></div>
+<div class="row g-3">
+  <div class="col-lg-4"><div class="panel">
+    <div class="panel-title"><h2>Add designation</h2></div>
+    <form method="post" novalidate>{% csrf_token %}{% include "partials/form_fields.html" %}<button class="btn btn-primary mt-3" type="submit">Add</button></form>
+  </div></div>
+  <div class="col-lg-8"><div class="panel">
+    <div class="table-responsive"><table class="sh-table">
+      <thead><tr><th>Designation</th><th>Active employees</th><th>Status</th><th class="text-end">Action</th></tr></thead>
+      <tbody>{% for d in designations %}<tr><td>{{ d.name }}</td><td>{{ d.employee_count }}</td>
+        <td>{% if d.is_active %}<span class="pill pill-success">Active</span>{% else %}<span class="pill pill-neutral">Inactive</span>{% endif %}</td>
+        <td class="text-end"><form method="post" action="{% url 'departments:designation_toggle' d.pk %}" class="d-inline" data-confirm="{% if d.is_active %}Deactivate{% else %}Activate{% endif %} this designation?">{% csrf_token %}
+          <button class="btn btn-sm btn-light" type="submit">{% if d.is_active %}Deactivate{% else %}Activate{% endif %}</button></form></td></tr>
+      {% empty %}<tr><td colspan="4"><div class="empty-state">No designations yet.</div></td></tr>{% endfor %}</tbody>
+    </table></div>
+  </div></div>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Attendance{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Attendance</h1><p>{% if user.is_hr_or_admin %}Daily records for all employees.{% else %}Your attendance records.{% endif %}</p></div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-light" href="{% url 'attendance:summary' %}"><i class="bi bi-table" aria-hidden="true"></i> Monthly summary</a>
+    {% if user.is_hr_or_admin %}<a class="btn btn-primary" href="{% url 'attendance:record' %}"><i class="bi bi-pencil-square" aria-hidden="true"></i> Record / correct</a>{% endif %}
+  </div></div>
+<div class="panel">
+  <form method="get" class="filter-bar">
+    {% if user.is_hr_or_admin %}
+    <div style="flex:2 1 200px"><label class="form-label" for="q">Employee</label><input class="form-control" id="q" name="q" value="{{ filters.q }}" placeholder="ID or name"></div>
+    <div><label class="form-label" for="department">Department</label><select class="form-select" id="department" name="department"><option value="">All</option>{% for d in departments %}<option value="{{ d.pk }}" {% if filters.department == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>
+    {% endif %}
+    <div><label class="form-label" for="date_from">From</label><input class="form-control" type="date" id="date_from" name="date_from" value="{{ filters.date_from|date:'Y-m-d' }}"></div>
+    <div><label class="form-label" for="date_to">To</label><input class="form-control" type="date" id="date_to" name="date_to" value="{{ filters.date_to|date:'Y-m-d' }}"></div>
+    <div><label class="form-label" for="status">Status</label><select class="form-select" id="status" name="status"><option value="">All</option>{% for v, l in statuses %}<option value="{{ v }}" {% if filters.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div class="btn-wrap"><button class="btn btn-primary" type="submit">Filter</button><a class="btn btn-light" href="{% url 'attendance:list' %}">Reset</a></div>
+  </form>
+  <div class="table-responsive"><table class="sh-table">
+    <thead><tr><th>Date</th>{% if user.is_hr_or_admin %}<th>Employee</th><th>Department</th>{% endif %}<th>Check-in</th><th>Check-out</th><th>Worked</th><th>Status</th>{% if user.is_hr_or_admin %}<th class="text-end">Action</th>{% endif %}</tr></thead>
+    <tbody>
+    {% for a in page_obj %}
+      <tr><td>{{ a.date|date:"D, d M Y" }}</td>
+        {% if user.is_hr_or_admin %}<td>{{ a.employee.full_name }} <span class="text-muted small">{{ a.employee.employee_id }}</span></td><td>{{ a.employee.department|default:"—" }}</td>{% endif %}
+        <td>{{ a.check_in|time:"H:i"|default:"—" }}</td><td>{{ a.check_out|time:"H:i"|default:"—" }}</td><td>{{ a.worked_display }}</td>
+        <td>{% include "partials/status_pill.html" with value=a.status label=a.get_status_display %}</td>
+        {% if user.is_hr_or_admin %}<td class="text-end"><a class="btn btn-sm btn-light" href="{% url 'attendance:record' %}?employee={{ a.employee_id }}&amp;date={{ a.date|date:'Y-m-d' }}">Correct</a></td>{% endif %}</tr>
+    {% empty %}
+      <tr><td colspan="8"><div class="empty-state"><i class="bi bi-clock-history" aria-hidden="true"></i>No attendance records for these filters.</div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

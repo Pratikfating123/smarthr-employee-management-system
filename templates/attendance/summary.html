@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Attendance summary{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Monthly attendance summary</h1><p>Counts of each attendance status for the selected month.</p></div>
+  <a class="btn btn-light" href="{% url 'attendance:list' %}">&larr; Attendance records</a></div>
+<div class="panel">
+  <form method="get" class="filter-bar">
+    <div><label class="form-label" for="month">Month</label><select class="form-select" id="month" name="month">{% for n, name in months %}<option value="{{ n }}" {% if n == month %}selected{% endif %}>{{ name }}</option>{% endfor %}</select></div>
+    <div><label class="form-label" for="year">Year</label><input class="form-control" type="number" id="year" name="year" value="{{ year }}" min="2000" max="2100"></div>
+    {% if user.is_hr_or_admin %}<div><label class="form-label" for="department">Department</label><select class="form-select" id="department" name="department"><option value="">All</option>{% for d in departments %}<option value="{{ d.pk }}" {% if department == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>{% endif %}
+    <div class="btn-wrap"><button class="btn btn-primary" type="submit">Apply</button></div>
+  </form>
+  <div class="table-responsive"><table class="sh-table">
+    <thead><tr><th>Employee</th><th>Department</th><th>Present</th><th>Late</th><th>Half-day</th><th>Absent</th><th>On leave</th></tr></thead>
+    <tbody>
+    {% for e in page_obj %}
+      <tr><td>{{ e.full_name }} <span class="text-muted small">{{ e.employee_id }}</span></td><td>{{ e.department|default:"—" }}</td>
+        <td>{{ e.present_days }}</td><td>{{ e.late_days }}</td><td>{{ e.half_days }}</td><td>{{ e.absent_days }}</td><td>{{ e.leave_days }}</td></tr>
+    {% empty %}<tr><td colspan="7"><div class="empty-state">No employees to summarise.</div></td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

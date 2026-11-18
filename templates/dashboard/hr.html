@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<section class="welcome">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+    <div>
+      <h1>{{ greeting }}, {{ user.first_name|default:user.username }}</h1>
+      <p class="text-muted mb-0">{{ day|date:"l, d F Y" }}{% if day != today %} · <a href="{% url 'core:dashboard' %}">back to today</a>{% endif %}
+        — {{ stats.1.value }} of {{ stats.0.value }} active employees present{% if stats.2.value %}, {{ stats.2.value }} late{% endif %}{% if stats.3.value %}, {{ stats.3.value }} leave request{{ stats.3.value|pluralize }} awaiting review{% endif %}.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <form method="get" action="{% url 'employees:list' %}" class="d-flex gap-2" role="search">
+        <input class="form-control" type="search" name="q" placeholder="Search employees" aria-label="Search employees" style="min-width:200px">
+        <button class="btn btn-dark" type="submit" aria-label="Search"><i class="bi bi-search" aria-hidden="true"></i></button>
+      </form>
+      <a class="btn btn-primary" href="{% url 'employees:list' %}"><i class="bi bi-people" aria-hidden="true"></i> Manage employees</a>
+    </div>
+  </div>
+  <form method="get" class="d-flex gap-2 align-items-end mt-3 flex-wrap">
+    <div><label class="form-label" for="date">View date</label><input class="form-control" type="date" id="date" name="date" value="{{ day|date:'Y-m-d' }}"></div>
+    <button class="btn btn-light" type="submit">Update</button>
+  </form>
+</section>
+
+<div class="row g-3 mb-3">
+  {% for s in stats %}
+  <div class="col-6 col-lg"><div class="stat-card"><div class="stat-icon"><i class="bi bi-{{ s.icon }}" aria-hidden="true"></i></div>
+    <div class="stat-value">{{ s.value }}</div><div class="stat-label">{{ s.label }}</div></div></div>
+  {% endfor %}
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-4">
+    <div class="panel h-100">
+      <div class="panel-title"><h2>Workforce by department</h2></div>
+      {% if chart_labels %}
+      <div class="chart-wrap"><canvas id="deptChart" aria-label="Active employees per department" role="img"></canvas></div>
+      {% else %}<div class="empty-state"><i class="bi bi-pie-chart" aria-hidden="true"></i>No active employees assigned to departments yet.</div>{% endif %}
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="panel h-100">
+      <div class="panel-title"><h2>Pending leave requests</h2><a href="{% url 'leaves:list' %}?status=pending" class="btn btn-sm btn-light">View all</a></div>
+      <div class="table-responsive">
+        <table class="sh-table">
+          <thead><tr><th>ID</th><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th class="text-end">Action</th></tr></thead>
+          <tbody>
+          {% for leave in pending_leaves %}
+            <tr>
+              <td>{{ leave.employee.employee_id }}</td>
+              <td><a href="{% url 'leaves:detail' leave.pk %}">{{ leave.employee.full_name }}</a></td>
+              <td>{{ leave.leave_type }}</td>
+              <td>{{ leave.start_date|date:"d M" }}</td><td>{{ leave.end_date|date:"d M" }}</td>
+              <td class="text-muted" style="max-width:180px">{{ leave.reason|truncatechars:40 }}</td>
+              <td>{% include "partials/status_pill.html" with value=leave.status label=leave.get_status_display %}</td>
+              <td class="text-end text-nowrap">
+                {% if leave.employee.user_id != user.id %}
+                <form method="post" action="{% url 'leaves:approve' leave.pk %}" class="d-inline" data-confirm="Approve this leave request?">{% csrf_token %}<input type="hidden" name="next" value="{% url 'core:dashboard' %}"><button class="btn btn-sm btn-soft-success" type="submit">Approve</button></form>
+                <form method="post" action="{% url 'leaves:reject' leave.pk %}" class="d-inline" data-confirm="Reject this leave request?">{% csrf_token %}<input type="hidden" name="next" value="{% url 'core:dashboard' %}"><button class="btn btn-sm btn-soft-danger" type="submit">Reject</button></form>
+                {% else %}<span class="text-muted small">Your own request</span>{% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="8"><div class="empty-state"><i class="bi bi-check2-circle" aria-hidden="true"></i>No pending leave requests.</div></td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-4"><div class="panel h-100">
+    <div class="panel-title"><h3>Early arrivals</h3><span class="pill pill-success">{{ early_count }}</span></div>
+    <ul class="mini-list">{% for a in early %}<li><span>{{ a.employee.full_name }}</span><span class="text-muted">{{ a.check_in|time:"H:i" }}</span></li>
+      {% empty %}<li class="text-muted">No early arrivals.</li>{% endfor %}</ul>
+    <p class="text-muted small mt-2 mb-0">At or before {{ schedule.EARLY_ARRIVAL_MINUTES }} min ahead of {{ schedule.WORK_START|time:"H:i" }}.</p>
+  </div></div>
+  <div class="col-md-4"><div class="panel h-100">
+    <div class="panel-title"><h3>Late arrivals</h3><span class="pill pill-warning">{{ late_count }}</span></div>
+    <ul class="mini-list">{% for a in late %}<li><span>{{ a.employee.full_name }}</span><span class="text-muted">{{ a.check_in|time:"H:i"|default:"—" }}</span></li>
+      {% empty %}<li class="text-muted">No late arrivals.</li>{% endfor %}</ul>
+    <p class="text-muted small mt-2 mb-0">After {{ schedule.GRACE_MINUTES }} min grace past {{ schedule.WORK_START|time:"H:i" }}.</p>
+  </div></div>
+  <div class="col-md-4"><div class="panel h-100">
+    <div class="panel-title"><h3>Missing punches</h3><span class="pill pill-error">{{ missing_count }}</span></div>
+    <ul class="mini-list">{% for a in missing %}<li><span>{{ a.employee.full_name }}</span><span class="text-muted">{% if a.check_in %}no check-out{% else %}no check-in{% endif %}</span></li>
+      {% empty %}<li class="text-muted">No missing punches.</li>{% endfor %}</ul>
+    <a class="btn btn-sm btn-light mt-2" href="{% url 'attendance:record' %}">Correct attendance</a>
+  </div></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if chart_labels %}
+{{ chart_labels|json_script:"chart-labels" }}
+{{ chart_values|json_script:"chart-values" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  var labels = JSON.parse(document.getElementById("chart-labels").textContent);
+  var values = JSON.parse(document.getElementById("chart-values").textContent);
+  var palette = ["#b8c5ff", "#8fa3f8", "#292929", "#ddf4e3", "#fff0cf", "#fce4e4", "#c9c9d1", "#6b7bd6"];
+  new Chart(document.getElementById("deptChart"), {
+    type: "doughnut",
+    data: { labels: labels, datasets: [{ data: values, backgroundColor: labels.map(function (_, i) { return palette[i % palette.length]; }), borderWidth: 2, borderColor: "#fff" }] },
+    options: { maintainAspectRatio: false, cutout: "62%", plugins: { legend: { position: "bottom" } } }
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}
